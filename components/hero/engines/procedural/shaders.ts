@@ -51,6 +51,7 @@ uniform vec2 uLightTarget;
 uniform float uFloorY;
 
 uniform sampler2D uBottleTex;
+uniform float uTexH;       // bottle texture height in texels
 uniform vec4 uBottle;      // cx, cy, angle, L
 uniform vec4 uStopper;     // cx, cy, angle, alpha
 uniform float uBottleAlpha;
@@ -153,7 +154,10 @@ vec4 bottleSample(vec2 p, vec4 xf, float part, float bias, out vec2 uv) {
   float m = part > 0.0 ? smoothstep(CUT_V - edge, CUT_V + edge, uv.y)
                        : smoothstep(CUT_V + edge, CUT_V - edge, uv.y);
   if (m <= 0.0) return vec4(0.0);
-  return texture(uBottleTex, uv, bias) * m;
+  // Explicit LOD: implicit derivatives are undefined after the early returns
+  // above, which on some GPUs picks a blurry mip and draws the quad's edge.
+  float lod = log2(max(uTexH / (xf.w * uPx * uZoom.z), 1e-3)) + bias;
+  return textureLod(uBottleTex, uv, max(lod, 0.0)) * m;
 }
 
 vec3 shadeGlassPhoto(vec4 b, vec2 uv, vec2 p, float isBody, float lightAmt) {

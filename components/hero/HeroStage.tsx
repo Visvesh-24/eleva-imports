@@ -19,6 +19,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import type { HeroAssets } from "@/lib/hero-assets";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { whenAgeVerified } from "@/lib/age";
 import { prefersReducedMotion } from "@/lib/motion";
 import { Arrow, Button } from "@/components/ui/Button";
 import type { HeroEngine } from "./engines/types";
@@ -103,6 +104,9 @@ export function HeroStage({ assets }: { assets: HeroAssets }) {
     // Review/QA hook: ?heroProgress=0.5 freezes the shot at that point.
     const frozen = params.get("heroProgress");
 
+    let offAge = () => {};
+    let ageOk = false;
+    let engineReady = false;
     const ctx = gsap.context(() => {
       const q = gsap.utils.selector(root);
       const intro = { v: 0 };
@@ -114,8 +118,15 @@ export function HeroStage({ assets }: { assets: HeroAssets }) {
 
       // Headline: masked line reveal, then the supporting copy and CTAs.
       // y:0 overrides the px offset GSAP would otherwise parse from the CSS start state.
-      gsap.fromTo(q('[data-reveal="line"] > span'), { yPercent: 110, y: 0 }, { yPercent: 0, y: 0, duration: 1.5, ease: "expo.out", stagger: 0.12, delay: 0.3 });
-      gsap.fromTo(q('[data-reveal="fade"]'), { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 1.2, ease: "expo.out", stagger: 0.1, delay: 0.85 });
+      // Everything waits for the age gate so the reveal is actually seen.
+      const lines = gsap.fromTo(q('[data-reveal="line"] > span'), { yPercent: 110, y: 0 }, { yPercent: 0, y: 0, duration: 1.5, ease: "expo.out", stagger: 0.12, delay: 0.3, paused: true });
+      const fades = gsap.fromTo(q('[data-reveal="fade"]'), { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 1.2, ease: "expo.out", stagger: 0.1, delay: 0.85, paused: true });
+      offAge = whenAgeVerified(() => {
+        lines.play();
+        fades.play();
+        ageOk = true;
+        if (engineReady) playIntro();
+      });
 
       // Engine intro starts once its first frame exists.
       const playIntro = () =>
@@ -125,7 +136,15 @@ export function HeroStage({ assets }: { assets: HeroAssets }) {
           ease: assets.mode === "procedural" ? "none" : "power1.inOut",
           onUpdate: () => engineRef.current?.setIntro(intro.v),
         });
-      if (frozen === null) window.addEventListener("hero:ready", playIntro, { once: true });
+      if (frozen === null)
+        window.addEventListener(
+          "hero:ready",
+          () => {
+            engineReady = true;
+            if (ageOk) playIntro();
+          },
+          { once: true },
+        );
       else {
         const p = Math.min(1, Math.max(0, parseFloat(frozen) || 0));
         const apply = () => {
@@ -179,7 +198,10 @@ export function HeroStage({ assets }: { assets: HeroAssets }) {
       ScrollTrigger.refresh();
     }, root);
 
-    return () => ctx.revert();
+    return () => {
+      offAge();
+      ctx.revert();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

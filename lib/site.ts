@@ -6,6 +6,8 @@ export const SITE = {
   instagram: "https://www.instagram.com/adrianatequilamaster",
   whatsapp: "https://wa.me/19057181247",
   city: "Toronto, Canada",
+  /** Copyright year (static: Cache Components disallows reading the clock while prerendering). */
+  year: 2026,
 } as const;
 
 export const NAV = [
