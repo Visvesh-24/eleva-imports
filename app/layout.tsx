@@ -6,7 +6,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { CartDrawer } from "@/components/shop/CartDrawer";
 import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
-import { AGE_BOOT_SCRIPT } from "@/lib/age";
+import { AGE_BOOT_SCRIPT, AGE_GATE_ENABLED } from "@/lib/age";
 import { getCollections, getProduct } from "@/lib/products";
 import { SmoothScroll } from "@/components/motion/SmoothScroll";
 import { Cursor } from "@/components/ui/Cursor";
@@ -77,7 +77,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <Footer />
         <CartDrawer />
         <WhatsAppButton />
-        <AgeGate />
+        {AGE_GATE_ENABLED && <AgeGate />}
         <Cursor />
         <Grain />
       </body>

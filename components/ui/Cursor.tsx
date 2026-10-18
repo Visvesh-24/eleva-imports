@@ -17,7 +17,6 @@ export function Cursor() {
   useEffect(() => {
     if (!isFinePointer()) return;
     const root = document.documentElement;
-    root.classList.add("has-cursor");
     const reduced = prefersReducedMotion();
     const pos = { x: innerWidth / 2, y: innerHeight / 2 };
     const g = { x: pos.x, y: pos.y, s: 1 };
@@ -30,6 +29,8 @@ export function Cursor() {
       pos.y = e.clientY;
       if (!visible) {
         visible = true;
+        // Hide the native pointer only once ours is actually on screen.
+        root.classList.add("has-cursor");
         g.x = pos.x;
         g.y = pos.y;
         dot.current?.style.setProperty("opacity", "1");
@@ -41,6 +42,7 @@ export function Cursor() {
     };
     const leave = () => {
       visible = false;
+      root.classList.remove("has-cursor");
       dot.current?.style.setProperty("opacity", "0");
       glow.current?.style.setProperty("opacity", "0");
     };
@@ -77,12 +79,12 @@ export function Cursor() {
       <div
         ref={glow}
         aria-hidden
-        className="pointer-events-none fixed left-0 top-0 z-[70] size-9 rounded-full opacity-0 transition-opacity duration-300 [background:radial-gradient(circle,rgb(227_162_74/0.32)_0%,rgb(227_162_74/0.12)_45%,transparent_70%)] [box-shadow:0_0_0_1px_rgb(226_201_155/0.28)]"
+        className="pointer-events-none fixed left-0 top-0 z-[200] size-9 rounded-full opacity-0 transition-opacity duration-300 [background:radial-gradient(circle,rgb(227_162_74/0.32)_0%,rgb(227_162_74/0.12)_45%,transparent_70%)] [box-shadow:0_0_0_1px_rgb(226_201_155/0.28)]"
       />
       <div
         ref={dot}
         aria-hidden
-        className="pointer-events-none fixed left-0 top-0 z-[71] size-1.5 rounded-full bg-gold-soft opacity-0 mix-blend-difference transition-opacity duration-300"
+        className="pointer-events-none fixed left-0 top-0 z-[201] size-1.5 rounded-full bg-gold-soft opacity-0 mix-blend-difference transition-opacity duration-300"
       />
     </>
   );
