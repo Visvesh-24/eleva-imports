@@ -24,7 +24,7 @@ type Uniforms = Record<string, WebGLUniformLocation | null>;
 const UNIFORMS = [
   "uRes", "uPx", "uStage", "uU", "uTime", "uLightOn", "uGlow", "uZoom",
   "uLightPos", "uLightTarget", "uFloorY",
-  "uBottleTex", "uBottle", "uStopper", "uBottleAlpha", "uBottleLevel", "uBottleSlosh", "uBottleDim", "uSweep", "uBottleFloorY",
+  "uBottleTex", "uTexH", "uBottle", "uStopper", "uBottleAlpha", "uBottleLevel", "uBottleSlosh", "uBottleDim", "uSweep", "uBottleFloorY",
   "uGlassA", "uGlassB", "uGlassC", "uWave",
   "uStream", "uStreamCount", "uStreamBox", "uDrops", "uDropCount", "uBubbles", "uBubbleCount",
 ] as const;
@@ -199,6 +199,7 @@ export class PourEngine implements HeroEngine {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     this.tex = tex;
     gl.uniform1i(this.u.uBottleTex, 0);
+    gl.uniform1f(this.u.uTexH, c.height);
 
     this.liquid = new BottleLiquid(BOTTLE_TEX.tankTopV, BOTTLE_TEX.photoLevelV, BOTTLE_TEX.aspect);
     this.loaded = true;

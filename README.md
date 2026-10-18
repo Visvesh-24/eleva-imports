@@ -2,9 +2,9 @@
 
 A cinematic DTC storefront for **Eleva Imports**: additive-free, 100% blue agave tequila chosen by Adriana Martinez, Canada's only Certified Tequila Master.
 
-Built with **Next.js 16** (App Router, Turbopack), **TypeScript**, **Tailwind CSS v4**, **GSAP + ScrollTrigger**, **Lenis** and **Framer Motion**. The hero pour is a hand-written WebGL2 renderer with no 3D library.
+Built with **Next.js 16** (App Router, Turbopack, Cache Components), **TypeScript**, **Tailwind CSS v4**, **GSAP + ScrollTrigger**, **Lenis** and **Framer Motion**. The hero pour is a hand-written WebGL2 renderer with no 3D library.
 
-> **Status: review checkpoint 1 (hero).** The design system, layout shell and the full hero are built. Shop, cart, the remaining home sections, content pages, age gate and SEO extras come next (see `PLAN.md` and `TODO.md`).
+> **Status:** every page except checkout is built. The cart works and is saved on the device. Checkout is a documented hand-off stub (no payment is faked). Product, event, trade and recipe data are **mock** until the client supplies the real data (see `TODO.md`).
 
 ## Getting started
 
@@ -13,83 +13,85 @@ npm install
 npm run dev        # http://localhost:3000
 npm run build && npm start
 npm run lint
-npm run assets     # regenerate hero texture, bottle mask, logo variants (needs sharp, a dev dependency)
+npm run assets     # regenerate product images, hero texture, bottle mask, logo variants, OG image (uses sharp, a dev dependency)
 ```
 
-Node 20.9+ is required (developed on Node 22).
+Node 20.9+ is required (developed on Node 22). Deploy on Vercel with the **Next.js** preset and default settings.
 
-### Reviewing the hero
+### Review helpers
 
-- Scroll to scrub the pour. The hero pins for about 2.8 viewport heights.
-- `/?heroProgress=0.55` freezes the shot at any point (0 to 1), which is handy for screenshots and design review.
-- Turn on *Reduce motion* in your OS to see the static fallback.
+- `/?heroProgress=0.55` freezes the hero pour at any point (0 to 1).
+- The age gate shows on the first visit. To see it again, clear `localStorage["eleva.age.v1"]` and the `eleva_age` cookie.
+- Turn on *Reduce motion* in your OS to see the static fallbacks.
+
+## Pages
+
+| Route | What it is |
+| --- | --- |
+| `/` | Hero pour → trust strip → "Five ways in" collections bento → pinned featured-bottles gallery → Meet Adriana → masterclass banner → trade program → recipes teaser → 10% welcome newsletter |
+| `/shop` | All bottles: collection chips, filters (type, size, price) and sort mirrored to the URL, animated grid |
+| `/collections/[handle]` | 7 categories (Reserva Huizar, Blancos for Mixing, 100 ml Tasting Minis, Boutique Tequila Collection, Pechery Cream Liqueurs, Riedel Crystal Glassware, Other Liquors) + 4 edits (Sip Neat, Mix & Pour, Gift & Share, Start Here), each with its own lighting, motif and bottle fan |
+| `/products/[handle]` | Product themed in the bottle's colour: 3D-tilt stage with masked specular sweep and reflection, variants, quantity, add to cart with the bottle-drop animation, sticky add-to-cart, tasting tabs + flavour radar, craft specs, serve-it-like, Adriana's note, related bottles, Product JSON-LD |
+| `/masterclass` | Formats, scroll-drawn "field to glass" timeline, host section, tasting flight, FAQ, booking form |
+| `/events` | Date-led calendar with inline RSVP, past events, private events |
+| `/recipes`, `/recipes/[slug]` | 10 recipes/rituals/pairings with servings scaler + 4 long-form guides, with animated line-art glassware |
+| `/about` | Adriana's story, numbers, philosophy, timeline |
+| `/trade`, `/trade/ordering`, `/trade/quick-reorder` | Agave program + back-bar builder + application, case order sheet, reorder flow |
+| `/contact` | Enquiry form, WhatsApp/Instagram, Toronto line-art map, FAQ |
+
+Site-wide: age gate (province-aware legal age), header with shop mega menu, full-screen mobile menu, cart drawer, floating WhatsApp, amber page-transition wipe, custom cursor, film grain, compliance footer, sitemap, robots, OG image, 404.
 
 ## Project structure
 
 ```
-app/
-  layout.tsx            fonts (next/font), header, smooth scroll, cursor, grain
-  page.tsx              home
-  globals.css           design tokens (@theme), textures, motion utilities
+app/                      routes (see table), layout, template (page transition), sitemap/robots/OG
 components/
-  hero/
-    Hero.tsx            server: detects media in /public/hero
-    HeroStage.tsx       client: copy, pinning, intro + scrub timelines, engine boot
-    engines/
-      types.ts          HeroEngine contract (setIntro / setProgress / setActive)
-      FrameSequenceEngine.ts   canvas frame scrubbing (progressive preload)
-      VideoEngine.ts           throttled <video> seeking
-      procedural/
-        choreography.ts  progress → poses (bottle, stopper, tilt, fill, glow), layout
-        simulation.ts    ballistic stream parcels, splash, bubbles, ripples, bottle liquid level
-        shaders.ts       single-pass GLSL compositor
-        PourEngine.ts    WebGL2 setup, loop, adaptive resolution, offscreen pause
-        bottleMask.ts    generated by scripts/prepare-assets.mjs
-  home/                 home sections (TrustStrip so far)
-  layout/               Header
-  motion/               SmoothScroll (Lenis ↔ GSAP ticker)
-  ui/                   Button (magnetic), Cursor, Grain
+  art/Art.tsx             animated vector art: AgaveArt, OrbitRings, GoldDust, CircularText, WaveLines, LightRays, TalaveraRosette, BackdropWord
+  hero/                   the pour (engines: procedural WebGL, frame sequence, video)
+  home/                   home sections
+  shop/                   ProductCard, ShopView (filters/sort), CollectionHero, CartDrawer
+  product/                product page stage, buy box, story sections, related
+  learn/                  masterclass + events components
+  content/                recipes, guides, about, contact components (incl. GlassArt line-art glasses)
+  trade/                  trade program, order sheet, quick reorder
+  editorial/              PageHero, SectionHeading, PortraitFrame
+  layout/ motion/ ui/ compliance/
 lib/
-  gsap.ts               single GSAP/ScrollTrigger registration
-  motion.ts             easing + duration scale shared by CSS/GSAP/Framer
-  hero-assets.ts        server-side hero media discovery
-  site.ts               links, nav, contact constants
-products/               original product cutouts (source of truth for imagery)
-public/hero/            hero media (see public/hero/README.md)
-scripts/prepare-assets.mjs
+  products.ts             THE catalogue API (async) → swap point for Shopify
+  catalog-data.ts         mock catalogue (products + collections)
+  catalog-types.ts        domain types
+  product-images.ts       generated image metadata (sizes + blur placeholders)
+  money.ts                CAD / en-CA formatting
+  cart.ts                 cart store (localStorage) + bottle-drop animation
+  age.ts                  age gate state + province ages
+  adriana.ts              founder portraits (auto-detected in /public/adriana)
+  experiences.ts trade.ts recipes.ts   mock content for those sections
+  forms.ts                form submission stub (one place to connect a provider)
+  jsonld.ts               schema.org builders
+products/                 original product cutouts (source imagery)
+public/products/          web-optimised product images (generated)
+public/adriana/           founder photos go here (see its README)
+public/hero/              optional filmed/rendered pour (see its README)
 ```
 
-## Design system
+## Design and motion system
 
-All tokens live in `app/globals.css`, in the `@theme` block, and become Tailwind utilities such as `bg-ink-950`, `text-gold-soft`, `ease-expo`, `rounded-card` and `px-gutter`.
+All tokens live in `app/globals.css`, in the `@theme` block: colours, type scale, spacing, radii, shadows, easing and durations. JavaScript uses the same easing and durations through `lib/motion.ts`.
 
-- **Palette**: agave-black and charcoal base, bone text, amber/gold light, and copper and rose-gold sampled from the logo, with a restrained agave-green accent.
-- **Type**: Cormorant Garamond (display) and Manrope (UI), self-hosted and subset via `next/font`.
-- **Motion**: one easing curve (`cubic-bezier(0.22, 1, 0.36, 1)`) and one duration scale (0.2, 0.4, 0.8, 1.2 and 1.8 s), mirrored in `lib/motion.ts`.
-- **Responsive hero**: the custom `wide` / `narrow` variants (≥ 768 px and landscape-ish, or not) match the WebGL layout switch in `choreography.ts`. That keeps the copy and the 3D scene composed together on phones, portrait tablets and desktops.
+- **Theming:** each product and collection carries a `theme` (`accent`, `glow`, `deep`) that is set as CSS variables. Cards, stages, rings and buttons pick it up, so the cobalt Plata glows blue and the Rosado glows magenta.
+- **Responsive hero:** the custom `wide` / `narrow` Tailwind variants match the WebGL layout switch, so copy and scene stay composed on phones, portrait tablets and desktops.
 
-## The hero, briefly
+## Founder photos
 
-1. SSR paints the headline and a dark CSS stage (or `poster.jpg` when media exists). This is the LCP.
-2. After hydration and idle, the engine is **code-split in** (about 40 KB for the procedural engine). It compiles its shader without blocking where `KHR_parallel_shader_compile` is available, then crossfades in.
-3. **Intro** (autoplay): the light warms up, the bottle emerges and a light sweep crosses the crystal, while the headline reveals line by line.
-4. **Scrub** (pinned): uncork, then carry and tilt. The liquid line inside the bottle stays level with the world and conserves volume. The stream is a chain of ballistic parcels with Plateau–Rayleigh beading, and it lands with splash droplets, bubbles, ripples and foam. The glass fills, with Beer–Lambert colour, a meniscus and floor caustics. The bottle returns and is re-stoppered, then the glass glows and hands off to the next section.
-5. Rendering pauses offscreen and in hidden tabs. Resolution adapts to hold about 50 fps or better. Reduced motion gets a single still frame.
-
-Drop a frame sequence or video into `public/hero/` to replace the procedural pour. See [`public/hero/README.md`](public/hero/README.md) for exact specs.
+Drop the three supplied photographs into `public/adriana/` as `adriana-agave-field.jpg`, `adriana-cellar.jpg` and `adriana-barrels.jpg`. They appear automatically on Home, About, Masterclass, Trade and product pages. Until then an art-directed "AM" frame shows.
 
 ## Commerce architecture and Shopify migration path
 
-*(The data layer and cart land in the next build phase. This is the contract they follow.)*
-
-- `lib/products.ts` will be the **only** module UI components import product data from. It exposes typed async functions (`getProducts`, `getProduct(handle)`, `getCollections`, `getCollection(handle)`) that return plain `Product` / `Collection` objects (prices in CAD minor units, `en-CA` formatting via `Intl.NumberFormat`).
-- Phase 1 implementation: mock catalogue built from the images in `/products`.
-- **Swapping to the Shopify Storefront API**:
+- UI components get catalogue data **only** from `lib/products.ts` (`getProducts`, `getProduct`, `getCollections`, `getCollection`, `getCollectionProducts`, `getFeaturedProducts`, `getRelatedProducts`). It returns the plain types in `lib/catalog-types.ts`, with money in CAD minor units.
+- **Swapping to the Shopify Storefront API:**
   1. Add `SHOPIFY_STORE_DOMAIN` and `SHOPIFY_STOREFRONT_ACCESS_TOKEN` to `.env.local`.
-  2. Implement the same functions in `lib/shopify/` with GraphQL queries (`products`, `productByHandle`, `collectionByHandle`). Map `ProductVariant.price.amount` and `currencyCode: CAD` into the existing types.
-  3. Point `lib/products.ts` at the Shopify implementation. Cache with `'use cache'` + `cacheLife('hours')` and `cacheTag('products')`, and revalidate from a Shopify webhook route.
-  4. Cart: replace the localStorage cart adapter with Storefront `cartCreate` / `cartLinesAdd`, keep the same `useCart()` hook, and **redirect to `cart.checkoutUrl`** at checkout. No payment processing is faked in this codebase.
-
-## Compliance (planned for the next phase)
-
-A full-screen age gate (remembered), "Please enjoy responsibly" and "Must be of legal drinking age in your province" footer notes, and a placeholder note that shipping availability varies by province, which the client needs to confirm.
+  2. Implement the same functions in `lib/shopify/` with GraphQL (`products`, `productByHandle`, `collectionByHandle`), mapping variants, `price.amount` and `currencyCode: CAD`, images and metafields (tasting notes, profile, specs, theme) into the existing types.
+  3. Point `lib/products.ts` at it. Cache with `'use cache'` + `cacheLife('hours')` + `cacheTag('products')`, and revalidate from a Shopify webhook route handler.
+  4. **Cart and checkout:** replace the mutators in `lib/cart.ts` with Storefront `cartCreate` / `cartLinesAdd` / `cartLinesUpdate` (keep `useCart()`'s shape). Then make `beginCheckout()` in `components/shop/CartDrawer.tsx` redirect to `cart.checkoutUrl`.
+  5. **Trade:** the quick-reorder lookup and order sheet move to Shopify customer accounts / B2B (TODOs are in `components/trade/`).
+- **Forms:** all forms call `submitForm()` in `lib/forms.ts`, which is currently a stub. Connect a provider there.
