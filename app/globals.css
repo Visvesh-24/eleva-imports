@@ -1,0 +1,256 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   Eleva Imports — design tokens
+   Every colour, easing, radius and shadow used by the site lives here so the
+   look can be retuned in one place. Tailwind utilities are generated from the
+   @theme block (e.g. bg-ink-950, text-amber, font-display, ease-expo).
+   ========================================================================== */
+
+/* Hero composition switch, shared with the WebGL layout (choreography.ts):
+   "wide" = side-by-side copy + scene; "narrow" = stacked (phones, portrait tablets). */
+@custom-variant wide {
+  @media (min-width: 768px) and (min-aspect-ratio: 9/10) {
+    @slot;
+  }
+}
+@custom-variant narrow {
+  @media not all and (min-width: 768px) and (min-aspect-ratio: 9/10) {
+    @slot;
+  }
+}
+
+@theme {
+  /* Base: agave-black → charcoal */
+  --color-ink-950: #0b0a09;
+  --color-ink-900: #11100e;
+  --color-ink-850: #161412;
+  --color-ink-800: #1c1916;
+  --color-ink-700: #2a2622;
+  --color-ink-600: #3b3530;
+
+  /* Text */
+  --color-bone: #f3ebdd;
+  --color-parchment: #d9cdb8;
+  --color-mist: #b5aa99;
+  --color-smoke: #8a8073;
+
+  /* Light: amber, gold, copper (copper + rose-gold sampled from the logo) */
+  --color-amber: #e3a24a;
+  --color-amber-deep: #b8742a;
+  --color-gold: #c9a46a;
+  --color-gold-soft: #e2c99b;
+  --color-copper: #d48358;
+  --color-copper-deep: #ac5e3f;
+  --color-rosegold: #f8c898;
+  --color-silver: #a9abaf;
+
+  /* Accent: agave */
+  --color-agave: #7f9a78;
+  --color-agave-deep: #4f6a4c;
+
+  /* Type */
+  --font-display: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
+  --font-sans: var(--font-manrope), "Manrope", ui-sans-serif, system-ui, sans-serif;
+
+  /* Fluid display sizes */
+  --text-display-xl: clamp(3.25rem, 1.6rem + 6.6vw, 8.75rem);
+  --text-display-xl--line-height: 0.92;
+  --text-display-lg: clamp(2.6rem, 1.5rem + 4.4vw, 6rem);
+  --text-display-lg--line-height: 0.96;
+  --text-display-md: clamp(2rem, 1.4rem + 2.4vw, 3.75rem);
+  --text-display-md--line-height: 1.02;
+
+  /* Spacing additions (section rhythm) */
+  --spacing-gutter: clamp(1.25rem, 0.6rem + 2.6vw, 3.5rem);
+  --spacing-section: clamp(6rem, 4rem + 8vw, 12rem);
+
+  /* Radii */
+  --radius-soft: 0.375rem;
+  --radius-card: 1.25rem;
+  --radius-pill: 999px;
+
+  /* Shadows / glows */
+  --shadow-glow: 0 0 40px -8px rgb(227 162 74 / 0.45);
+  --shadow-glow-lg: 0 0 120px -20px rgb(227 162 74 / 0.5);
+  --shadow-card: 0 30px 80px -30px rgb(0 0 0 / 0.8);
+
+  /* Motion: ONE easing curve, one duration scale (mirrored in lib/motion.ts) */
+  --ease-expo: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-silk: cubic-bezier(0.65, 0, 0.35, 1);
+  --duration-xs: 200ms;
+  --duration-sm: 400ms;
+  --duration-md: 800ms;
+  --duration-lg: 1200ms;
+  --duration-xl: 1800ms;
+
+  --animate-marquee: marquee 38s linear infinite;
+  --animate-cue: cue 2.4s var(--ease-silk) infinite;
+
+  @keyframes marquee {
+    from { transform: translate3d(0, 0, 0); }
+    to { transform: translate3d(-50%, 0, 0); }
+  }
+  @keyframes cue {
+    0% { transform: scaleY(0); transform-origin: top; }
+    45% { transform: scaleY(1); transform-origin: top; }
+    55% { transform: scaleY(1); transform-origin: bottom; }
+    100% { transform: scaleY(0); transform-origin: bottom; }
+  }
+}
+
+:root {
+  color-scheme: dark;
+  --header-h: 5rem;
+  /* Shared hairline */
+  --hairline: linear-gradient(90deg, transparent, rgb(201 164 106 / 0.55) 20%, rgb(201 164 106 / 0.55) 80%, transparent);
+}
+
+/* ========================================================================== */
+
+html {
+  background: var(--color-ink-950);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--color-ink-950);
+  color: var(--color-bone);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: clip;
+}
+
+::selection {
+  background: rgb(227 162 74 / 0.35);
+  color: var(--color-bone);
+}
+
+:focus-visible {
+  outline: 1px solid var(--color-gold-soft);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+/* Lenis recommended styles */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   Texture: film grain (fixed, GPU-cheap SVG noise, animated in steps)
+   -------------------------------------------------------------------------- */
+.grain {
+  pointer-events: none;
+  position: fixed;
+  inset: -50%;
+  z-index: 60;
+  opacity: 0.075;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1.2 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  mix-blend-mode: overlay;
+  animation: grain 0.9s steps(6) infinite;
+}
+@keyframes grain {
+  0% { transform: translate3d(0, 0, 0); }
+  20% { transform: translate3d(-6%, 4%, 0); }
+  40% { transform: translate3d(5%, -3%, 0); }
+  60% { transform: translate3d(-3%, -6%, 0); }
+  80% { transform: translate3d(6%, 5%, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+/* Thin gold hairline divider */
+.hairline {
+  height: 1px;
+  background: var(--hairline);
+}
+
+/* Small caps eyebrow */
+.eyebrow {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--color-gold-soft);
+}
+
+/* Masked line reveal: each line is clipped by its wrapper. The hidden start
+   state only applies once JS is confirmed (html.js) so no-JS visitors and
+   crawlers always see the copy. */
+.mask-line {
+  display: block;
+  overflow: hidden;
+  /* room for descenders / italic overhang */
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+.mask-line > span {
+  display: block;
+  will-change: transform;
+}
+html.js [data-reveal="line"] > span {
+  transform: translate3d(0, 110%, 0);
+}
+html.js [data-reveal="fade"] {
+  opacity: 0;
+}
+
+/* Animated underline link */
+.link-underline {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-size: 0% 1px;
+  background-position: 100% 100%;
+  background-repeat: no-repeat;
+  transition: background-size var(--duration-sm) var(--ease-expo);
+}
+.link-underline:hover,
+.link-underline:focus-visible {
+  background-size: 100% 1px;
+  background-position: 0% 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grain {
+    animation: none;
+  }
+  html.js [data-reveal="line"] > span {
+    transform: none;
+  }
+  html.js [data-reveal="fade"] {
+    opacity: 1;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Custom cursor hides the native one only on fine pointers */
+@media (hover: hover) and (pointer: fine) {
+  html.has-cursor,
+  html.has-cursor * {
+    cursor: none !important;
+  }
+}
+
+/* Hero chapter rail: highlight the active beat */
+#hero[data-beat="uncork"] .hero-rail-item[data-b="uncork"],
+#hero[data-beat="pour"] .hero-rail-item[data-b="pour"],
+#hero[data-beat="savour"] .hero-rail-item[data-b="savour"] {
+  color: var(--color-gold-soft);
+}
