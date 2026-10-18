@@ -3,13 +3,22 @@
  * and a cookie; an inline script in <head> marks <html data-age="ok"> before
  * first paint so returning visitors never see the gate flash.
  */
+/**
+ * Master switch for the age gate. Disabled for now at the client's request;
+ * set to true to bring the full-screen gate back (nothing else changes).
+ */
+export const AGE_GATE_ENABLED = false;
+
 export const AGE_KEY = "eleva.age.v1";
 export const AGE_EVENT = "eleva:age-ok";
 
 /** Inline pre-paint script (kept tiny; runs before React). */
-export const AGE_BOOT_SCRIPT = `try{if(localStorage.getItem('${AGE_KEY}')==='ok'||document.cookie.indexOf('eleva_age=ok')>-1)document.documentElement.dataset.age='ok'}catch(e){}`;
+export const AGE_BOOT_SCRIPT = AGE_GATE_ENABLED
+  ? `try{if(localStorage.getItem('${AGE_KEY}')==='ok'||document.cookie.indexOf('eleva_age=ok')>-1)document.documentElement.dataset.age='ok'}catch(e){}`
+  : "document.documentElement.dataset.age='ok'";
 
 export function isAgeVerified() {
+  if (!AGE_GATE_ENABLED) return true;
   return typeof document !== "undefined" && document.documentElement.dataset.age === "ok";
 }
 
